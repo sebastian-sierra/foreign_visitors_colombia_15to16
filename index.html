@@ -55,7 +55,7 @@
             </p>
         </div>
         <div class="row">
-            <h2 id="tooltip" style="visibility: hidden"></h2>
+            <div id="tooltip" style="visibility: hidden"></div>
         </div>
     </div>
 </div>
@@ -212,13 +212,13 @@
 
                     tooltipLabel.style('visibility', 'visible')
                         .html(`
-                                <strong>${currentTotal}</strong>
+                                <span style="font-size: 4em;">${currentTotal}</span>
                                 <br>
-                                Visitantes
+                                <span style="font-size: 1em">Visitantes</span>
                                 <br>
-                                de
+                                <span style="font-size: 1em">de</span>
                                 <br>
-                                <span style="color:${z(d.key)}">${d.key}</span>
+                                <span style="color:${z(d.key)}; font-size: 2em">${d.key}</span>
                         `)
 
                 })
