@@ -17,8 +17,38 @@
         <svg width="900" height="690"></svg>
     </div>
     <div class="col-md-4">
-        <h2 id="tooltip" style="visibility: hidden">
-        </h2>
+        <div class="row">
+            <h3>El Turismo en colombia se dispara en el verano del 2016</h3>
+            <p>
+                La gráfica a la izquierda muestra el flujo de visitantes extranjeros de los 20 países con mayor turistas
+                desde Julio del 2015 hasta septiembre del 2016.
+                <br>
+                Podemos aprender varias cosas de la gráfica:
+                <ul>
+                    <li>
+                        Los norteaméricanos junto a los venezolanos, son las naciones de los que más recibimos
+                        visitantes
+                    </li>
+                    <li>
+                        La reapertura de la frontera con Venezuela duplicó practicamente
+                        la cantidad de visitantes de dicho país
+                    </li>
+                    <li>
+                        Los meses más turísticos suelen ser durante el verano del hemisferio norte, diciembre y marzo.
+                        Por el contrario, septiembre y marzo son los meses con menos visitantes
+                    </li>
+                    <li>
+                        El turismo colombiano está en gran parte conformado por nuestros hermanos hispanoaméricanos
+                    </li>
+                    <li>
+                        Después de España, la nacionalidad europea de la que más recibimos visitantes es Francia
+                    </li>
+                </ul>
+            </p>
+        </div>
+        <div class="row">
+            <h2 id="tooltip" style="visibility: hidden"></h2>
+        </div>
     </div>
 </div>
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -159,7 +189,7 @@
                     svg.selectAll('.layer')
                         .transition()
                         .duration(250)
-                        .attr('opacity', (d, j) => j !== i ? 0.6 : 1);
+                        .attr('opacity', (d, j) => j !== i ? 0.3 : 1);
                 })
                 .on('mousemove', (d) => {
                     const mousex = d3.mouse(svg.node())[0];
