@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <title>Streamgraph</title>
+    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+</head>
+<style>
+
+
+
+</style>
+<body>
+<div class="row">
+    <div class="col-md-8">
+        <svg width="900" height="690"></svg>
+    </div>
+    <div class="col-md-4">
+        <h2 id="tooltip" style="visibility: hidden">
+        </h2>
+    </div>
+</div>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+    function stackMax(layer) {
+        return d3.max(layer, function (d) {
+            return d[1];
+        });
+    }
+
+    function stackMin(layer) {
+        return d3.min(layer, function (d) {
+            return d[0];
+        });
+    }
+
+    function monthIndex(month) {
+        switch (month) {
+            case "Enero":
+                return 0;
+            case "Febrero":
+                return 1;
+            case "Marzo":
+                return 2;
+            case "Abril":
+                return 3;
+            case "Mayo":
+                return 4;
+            case "Junio":
+                return 5;
+            case "Julio":
+                return 6;
+            case "Agosto":
+                return 7;
+            case "Septiembre":
+                return 8;
+            case "Octubre":
+                return 9;
+            case "Noviembre":
+                return 10;
+            case "Diciembre":
+                return 11;
+        }
+    }
+
+    const margin = {top: 2, right: 70, bottom: 20, left: 40};
+    const tooltip = d3.select('#tooltip');
+
+    let svg = d3.select("svg");
+
+    const width = svg.attr('width') - margin.left - margin.right;
+    const height = svg.attr('height') - margin.top - margin.bottom;
+
+    svg = svg.append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+    d3.csv("data/foreign_visitors_col.csv", (row) => {
+            return {
+                country: row.country,
+                month: new Date(row.year, monthIndex(row.month)),
+                total: +row.total
+            }
+        },
+        (error, data) => {
+            if (error) throw error;
+
+            const top20 = d3.nest()
+                .key(d => d.country)
+                .entries(data)
+                .map(c => {
+                    return {
+                        "country": c.key,
+                        "total": c.values.reduce((acc, curr) => acc + curr.total, 0)
+                    }
+                })
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 20)
+                .map(c => c.country);
+
+            const filteredData = data.filter(d => top20.includes(d.country));
+
+            const nestedByMonth = d3.nest()
+                .key(d => d.month)
+                .sortKeys((a, b) => new Date(a) - new Date(b))
+                .entries(filteredData)
+                .map(d => {
+                    let month = {month: new Date(d.key)};
+                    d.values.forEach(row => {
+                        month[row.country] = row.total
+                    });
+                    return month;
+                });
+
+            const stack = d3.stack()
+                .keys(top20)
+                .order(d3.stackOrderInsideOut)
+                .offset(d3.stackOffsetWiggle);
+
+            const layers = stack(nestedByMonth);
+
+            const x = d3.scaleTime()
+                .domain([new Date(2015, 6), new Date(2016, 8)])
+                .range([0, width]);
+
+            const y = d3.scaleLinear()
+                .domain([d3.min(layers, stackMin), d3.max(layers, stackMax)])
+                .range([height, 0]);
+
+            const z = d3.scaleOrdinal(d3.schemeCategory20);
+
+            const area = d3.area()
+                .x((d, i) => x(d.data.month))
+                .y0(d => y(d[0]))
+                .y1(d => y(d[1]))
+                .curve(d3.curveCardinal);
+
+
+            const paths = svg.selectAll(".layer")
+                .data(layers);
+
+            //Enter
+            const pathsEnter = paths.enter()
+                .append("path")
+                .classed('layer', true);
+
+            //Merge
+            paths
+                .merge(pathsEnter)
+                .attr("d", area)
+                .attr("fill", d => {
+                    return z(d.key)
+                })
+                .on('mouseover', (d, i, nodes) => {
+                    d3.select(nodes[i])
+                        .attr('stroke', 'black')
+                        .attr("stroke-width", "0.5px");
+                    svg.selectAll('.layer')
+                        .transition()
+                        .duration(250)
+                        .attr('opacity', (d, j) => j !== i ? 0.6 : 1);
+                })
+                .on('mousemove', (d) => {
+                    const mousex = d3.mouse(svg.node())[0];
+                    const mouseDate = x.invert(mousex);
+                    const currentDate = new Date(mouseDate.getFullYear(), mouseDate.getMonth());
+
+                    const currentMonth = d.find(m => {
+                        return m.data.month.getTime() === currentDate.getTime()
+                    });
+
+                    const currentTotal = currentMonth.data[d.key];
+
+                    tooltip.style('visibility', 'visible')
+                        .html(`
+                                <strong>${currentTotal}</strong>
+                                <br>
+                                Visitors
+                                <br>
+                                from
+                                <br>
+                                <span style="color:${z(d.key)}">${d.key}</span>
+                        `)
+
+                })
+                .on('mouseout', (d, i, nodes) => {
+                    svg.selectAll('.layer')
+                        .transition()
+                        .duration(250)
+                        .attr('opacity', 1);
+                    d3.select(nodes[i])
+                        .attr('stroke-width', '0px');
+                    tooltip.style('visibility', 'hidden');
+
+                });
+
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x));
+
+        });
+
+</script>
+</body>
