@@ -220,7 +220,28 @@
                                 <br>
                                 <span style="color:${z(d.key)}; font-size: 2em">${d.key}</span>
                         `)
-
+                
+                        //Code Review: Propuesta para colocar indicador sobre eje X                    
+                        var gLinHor = svg.select(".domain").select(function() { return this.parentNode; });
+                        d3.selectAll("#ejexmarca").remove();
+                        /*gLinHor.append("circle")
+                          .attr("id", "ejexmarca")
+                          .attr("cx", mousex)
+                          .attr("cy", 0)
+                          .attr("r", 5)
+                          .attr("stroke-width", 2)
+                          .attr("fill", "transparent")
+                          .attr("stroke", "green")
+                        ;*/
+                        gLinHor.append("line")
+                          .attr("id", "ejexmarca")
+                          .attr("x1", mousex)
+                          .attr("y1", -5)
+                          .attr("x2", mousex)
+                          .attr("y2", 5)
+                          .attr("stroke", "red")
+                          .attr("stroke-width", 2)
+                        ;
                 })
                 .on('mouseout', (d, i, nodes) => {
                     svg.selectAll('.layer')
@@ -230,7 +251,10 @@
                     d3.select(nodes[i])
                         .attr('stroke-width', '0px');
                     tooltipLabel.style('visibility', 'hidden');
-
+              
+                    //Code Review
+                    d3.selectAll("#ejexmarca").remove();
+                
                 });
 
             svg.append("g")
